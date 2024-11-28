@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@100..900&family=Roboto&display=swap" rel="stylesheet">
+	<script src="src/p5.min.js"></script>
+	<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.1/p5.min.js"></script>-->
+	<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/addons/p5.sound.min.js"></script>-->
+	<script src="src/sketch.js"></script>
+	<link rel="stylesheet" type="text/css" href="src/style.css">
+	<link rel="icon" type="image/x-icon" href="favicon.ico">
+	<meta charset="utf-8" />
+
+</head>
+<body>
+	<div id="canvasdiv" resize="setSize();">
+		<canvas id="canvas"></canvas>
+		<dd id="overlaytext"></dd>
+	</div>
+	<div id="loading"></div>
+	<div id="menu" class="hidden">
+		<div class="menurow">
+			<hr>
+			<div class="menusection">
+				<h3 class="sectionheader">Path Color Key</h3>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: rgb(227, 139, 73);"></div>
+					<span class="colorlabel">EDL</span>
+				</div>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: rgb(241, 64, 42);"></div>
+					<span class="colorlabel">Orbiting Earth</span>
+				</div>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: rgb(40, 169, 221);"></div>
+					<span class="colorlabel">Path to Moon</span>
+				</div>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: white;"></div>
+					<span class="colorlabel">Returning to Earth</span>
+				</div>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: magenta;"></div>
+					<span class="colorlabel">Other Path</span>
+				</div>
+			</div>
+			<hr>
+			<div class="menusection">
+				<h3 class="sectionheader">Antenna Color Key</h3>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: lime;"></div>
+					<span class="colorlabel">High Priority</span>
+				</div>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: yellow;"></div>
+					<span class="colorlabel">Medium Priority</span>
+				</div>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: orange;"></div>
+					<span class="colorlabel">Low Priority</span>
+				</div>
+				<div class="coloritem">
+					<div class="colorbox" style="background-color: red;"></div>
+					<span class="colorlabel">Very Low Priority</span>
+				</div>
+				<div class="coloritem">
+					<div class="colorbox" id="pulsingcolorbox"></div>
+					<span class="colorlabel">No Connection</span>
+				</div>
+			</div>
+			<hr>
+			<div class="menusection">
+				<label>Time (min)</label><br>
+				<input type="text" id="time" placeholder="0" oninput="setTime(this.value);"><br>
+				<label>Stroke Weight</label><br>
+				<input type="text" id="stroke" placeholder="100" oninput="strokeWeight(this.value == '' ? 100 : parseFloat(this.value));"><br>
+				<label>Speed (min/sec)</label><br>
+				<input type="text" id="speed" placeholder="10" oninput="speed = this.value == '' ? 10 : parseFloat(this.value);"><br>
+			</div>
+			<hr>
+		</div>
+		<hr>
+		<div class="menurow">
+			<button id="playbutton" onclick="playing = this.classList.toggle('playing');"></button>
+			<input type="range" value="0" min="0" max="12983.16998" step="1" id="timeslider" oninput="setTime(this.value);"/>
+		</div>
+		<hr>
+		<div class="menurow">
+			<hr>
+			<div class="menusection">
+				<label>Follow Earth</label><br>
+				<input type="checkbox" id="followEarth" oninput="handleFollowButtons('earth');"><br>
+				<label>Follow moon</label><br>
+				<input type="checkbox" id="followMoon" oninput="handleFollowButtons('moon');"><br>
+				<label>Follow probe</label><br>
+				<input type="checkbox" id="followProbe" oninput="handleFollowButtons('probe');"><br>
+			</div>
+			<hr>
+			<div class="menusection">
+				<label>Track Bonus</label><br>
+				<input type="checkbox" oninput="trackBonus = this.checked;"><br>
+				<label>Show Other Path</label><br>
+				<input type="checkbox" oninput="showOtherPath = this.checked;"><br>
+				<label>Show Antenna Color</label><br>
+				<input type="checkbox" oninput="showAntennaColor = this.checked;" checked><br>
+			</div>
+			<hr>
+			<div class="menusection">
+				<label>Show Axes</label><br>
+				<input type="checkbox" oninput="showAxes = this.checked;"><br>
+				<label>Show Text</label><br>
+				<input type="checkbox" oninput="showText = this.checked; overlayDOM.innerHTML = '';"><br>
+				<label>Use Textures</label><br>
+				<input type="checkbox" oninput="useTextures = this.checked;" checked>
+			</div>
+			<hr>
+		</div>
+	</div>
+	<p style="display:none;" id="p5_loading"></p>
+</body>
+
+</html>
