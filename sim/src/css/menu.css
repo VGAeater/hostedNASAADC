@@ -1,35 +1,3 @@
-* {
-	transition-duration: 0.25s;
-	color: white;
-	font-size: 2vh;
-	font-family: "Roboto Mono", monospace;
-	font-weight: 400;
-	font-style: normal;
-}
-
-html, body {
-	width: 100%;
-	height: 100%;
-	margin: 0;
-	padding: 0;
-	background-color: black;
-}
-
-#canvas {
-	position: fixed;
-	z-index: 0;
-	transition: none;
-}
-
-#canvasdiv {
-	width: 100%;
-	height: 100%;
-}
-
-#canvasdiv.small {
-	height: 65%;
-}
-
 #menu {
 	position: fixed;
 	height: 35%;
@@ -224,61 +192,10 @@ button:active {
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: 2vh;
-	background-image: url(../assets/play.svg);
+	background-image: url("../../assets/play.svg");
 }
 
 #playbutton.playing {
-	background-image: url(../assets/pause.svg);
+	background-image: url("../../assets/pause.svg");
 }
 
-#overlaytext {
-	position: fixed;
-	top: 0;
-	left: 0;
-	color: #cc1444;
-	margin: 0;
-	padding: 0;
-}
-
-#loading {
-	z-index: 1;
-	position: fixed;
-	left: calc(50vw - 17.5vmin);
-	top: calc(50vh - 17.5vmin);
-	display: inline-grid;
-	width: 35vmin;
-	aspect-ratio: 1;
-	overflow: hidden;
-	clip-path: circle(50% at 50% 50%);
-	background: url("../assets/moon.svg");
-	animation: moon 2s ease-in-out infinite;
-}
-
-#loading:before {
-	content: "";
-	background: url("../assets/arrow.svg");
-	/*background: white;*/
-	animation: arrow 2s ease-in-out infinite;
-	translate: 0px 0px;
-}
-
-@keyframes arrow {
-	50% { translate: 100% -75.3548304488%; }
-	50.01% { translate: 100% -100%; }
-	50.02% { translate: -100% -100%; }
-	50.03% { translate: -100% 75.3548304488%; }
-	100% { translate: 0px 0px; }
-}
-
-@keyframes moon {
-	35% {
-		scale: 110%;
-		translate: 5% -5%;
-	}
-}
-
-@keyframes pulsingcolorbox {
-	to {
-		background-color: red;
-	}
-}
