@@ -3,13 +3,16 @@ import * as c from "./constants.js";
 export function data() {
 	// finds the link budget for a specific range and radius of dish
 	this.linkBudget = function(slantr, dr) {
+		if (slantr == 0)
+			return 0;
+
 		let pt = 10;
 		let gt = 9;
 		let losses = 19.43;
 		let nr = 0.55;
 		let lam = 0.136363636363636;
 		let kb = -228.6;
-		let ts = 22;
+		let ts = 222;
 		let first = pt + gt - losses;
 		let dishCirc = dr * Math.PI;
 		let second = 10 * Math.log10(nr * ((dishCirc / lam)**2));

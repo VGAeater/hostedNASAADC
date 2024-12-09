@@ -1,4 +1,6 @@
 import * as c from "./constants.js";
+import * as b from "./bonus.js";
+
 
 export const scene = ( dataObject, s ) => ( p ) => {
 	// [color, start, end, base model, bonus model]
@@ -16,7 +18,7 @@ export const scene = ( dataObject, s ) => ( p ) => {
 
 	var prevBest = "WPSA";		// Previous best for the priorotized list
 
-	var showAxes = false, showText = false, showAntennaColor = true, useTextures = true, useAntennaList = true;	// state tracking variables for graphical options
+	var showAxes = false, showText = false, showAntennaColor = true, useTextures = true, useRocketModel = true;	// state tracking variables for graphical options
 	var followEarth = false, followMoon = false, followProbe = false;	// state tracking variables for following
 	var playing = false, speed = 10, strokeWeight = 100;	// state tracking variables for simulation speed
 
@@ -39,6 +41,7 @@ export const scene = ( dataObject, s ) => ( p ) => {
 	var showOtherPath = false;				// data selection trackers
 	var earthDayTex, earthNightTex, moonTex, cloudsTex;	// the textures for the earth and moon
 	var earthShader, moonShader, atmoShader;		// the shaders for the eath, moon, and atmosphere
+	var rocketModel;
 
 	// main dom objects
 	const canvas = document.getElementById("canvas");
@@ -71,7 +74,7 @@ export const scene = ( dataObject, s ) => ( p ) => {
 
 	// return a color based on how strong the antenna's connection is
 	function antennaColor(budget) {
-		if (isNaN(budget))
+		if (isNaN(budget) || budget == 0)
 			return [255, 0, 0, 255 * (Math.sin(p.millis() / 100) + 1) / 2];	// make strobing effect when no signal
 		if (budget > 8000)
 			return [0, 255, 0];
@@ -100,14 +103,18 @@ export const scene = ( dataObject, s ) => ( p ) => {
 		p.stroke(0,255,255);
 
 		p.push();
-
 		p.translate(x, y, z);
 		//rotateZ(createVector(x, y).heading());
 		//rotateY(-createVector(x, y).heading());
 		//console.log(createVector(x, y, z).angleBetween(createVector(0, 0, 0)));
-		//cone(500, 1000, 8);				// draw the probe
-		p.sphere(500, 6, 3);				// change it to a sphere until we get rotation or model
-
+		if (useRocketModel) {
+			p.strokeWeight(1);			// wow wireframe!! 
+			p.scale(4);				//looks miscroscopic without scaling up
+			p.model(rocketModel);
+			p.scale(1);
+		} else 
+			p.sphere(500, 6, 3);			// change it to a sphere until we get rotation or model
+		
 		p.pop();
 
 		let veloVectorDistance = Math.hypot(xv, yv, zv);
@@ -176,7 +183,7 @@ export const scene = ( dataObject, s ) => ( p ) => {
 		p.translate(x, y, z);
 		p.rotateX(-Math.PI);				// weird axes correction
 		p.rotateX(-c.earthTilt);			// tilt axis
-		p.rotateY(c.earthRotation * s.time + c.earthRotation * 521 /* temporary fix to correct the earths initial rotation */);	// rotate earth
+		p.rotateY(c.earthRotation * (s.time + 521) /* temporary fix to correct the earths initial rotation */);	// rotate earth
 
 		p.push();
 
@@ -203,7 +210,17 @@ export const scene = ( dataObject, s ) => ( p ) => {
 
 			let r = c.earthRadius + pos[2];
 			p.translate(r * Math.cos(pos[0]) * Math.cos(pos[1]), -r * Math.sin(pos[0]), -r * Math.cos(pos[0]) * Math.sin(pos[1]));	// negatives for even more weird axes correction
-			let budget = dataObject.linkBudget(baseData[pos[4]], pos[3]);
+
+			let budget;
+			if (s.trackBonus) {
+				let probeData = s.trackBonus ? bonusData : baseData;
+				let probeCoords = [probeData[c.arrayProbeStart], probeData[c.arrayProbeStart+1], probeData[c.arrayProbeStart+2]];
+				let moonCoords = [bonusData[c.arrayMoonStart], bonusData[c.arrayMoonStart+1], bonusData[c.arrayMoonStart+2]];
+
+				budget = dataObject.linkBudget(b.bonusRange(c.antennaPositions.indexOf(pos), probeCoords, moonCoords, s.time), pos[3]);
+			} else
+				budget = dataObject.linkBudget(baseData[pos[4]], pos[3]);
+
 			let color = showAntennaColor ? antennaColor(budget) : [255, 0, 255];	// if show color is checked, color based on budget, else is magenta.
 			p.stroke(color);			// color code specificly for its signal strength
 			p.sphere(350, 4, 2);			// very low poly sphere on purpose
@@ -279,7 +296,7 @@ export const scene = ( dataObject, s ) => ( p ) => {
 			return;
 
 		p.resizeCanvas(box.width, box.height);		// resize the dom element
-		p.perspective(2 * Math.atan(box.height / 2 / 800), box.width/box.height, 1, 10000000);	// recalculate the perspective box
+		p.perspective(2 * Math.atan(p.height / 2 / 800), p.width/p.height, 1, 10000000);	// recalculate the perspective box
 
 		prevbox = box;					// update the previous box
 	}
@@ -290,13 +307,22 @@ export const scene = ( dataObject, s ) => ( p ) => {
 	}
 
 	// generates a formated string used in the link budget monitors
-	function antennaText(range, radius) {
-		let netBudget = dataObject.linkBudget(range, radius);
+	function antennaText(budget) {
+		if (isNaN(budget))
+			return "N/A";
 
-		if (netBudget > 10000)
-			return `${netBudget.toFixed(0)}kbps → 10000`;
+		if (budget > 10000)
+			return `${budget.toFixed(2)}kb/s → 10Mb/s`;
 
-		return netBudget.toFixed(0);
+		return `${budget.toFixed(2)}kb/s`;
+	}
+
+	function listText(num) {
+		if (num == 10000)
+			return "10Mb/s";
+		if (isNaN(num))
+			return "N/A";
+		return `${num.toFixed(2)}kb/s`;
 	}
 
 	// Does the whole priorotized list thing
@@ -308,11 +334,11 @@ export const scene = ( dataObject, s ) => ( p ) => {
 			'DSS54': Math.min(dss54, 10000)
 		};
 	
-		budgets[prevBest] += 0.00001;			// Adds a negligible amount to the previous one so it sorts slightly above (idc if this is the best way to do this but, once again, cry about it)
+		budgets[prevBest] += 0.0009765625;		// Adds a negligible amount to the previous one so it sorts slightly above (idc if this is the best way to do this but, once again, cry about it)
 		const entries = Object.entries(budgets);
 		entries.sort((a, b) => (isNaN(a[1]) ? 0 : a[1]) - (isNaN(b[1]) ? 0 : b[1])); 	// Sorts it, if the budget is NaN, it is 0 cuz the sorting doesn't work on NaN
 		const sortedScores = Object.fromEntries(entries);
-		sortedScores[prevBest] -= 0.00001;		// put back the value taken to make it accurate
+		sortedScores[prevBest] -= 0.0009765625;		// put back the value taken to make it accurate
 		prevBest = Object.keys(sortedScores)[3];	// Makes prevbest
 
 		return sortedScores;
@@ -329,65 +355,74 @@ export const scene = ( dataObject, s ) => ( p ) => {
 		let probeV = Math.hypot(probeData[c.arrayProbeStart+3], probeData[c.arrayProbeStart+4], probeData[c.arrayProbeStart+5]);
 		let moonV = Math.hypot(bonusData[c.arrayMoonStart+3], bonusData[c.arrayMoonStart+4], bonusData[c.arrayMoonStart+5]);
 
-		let bufferLeft = `FPS: ${framerate.toFixed(3)} Time: ${s.time.toFixed(3)}<br>`;
-		let bufferRight = ``;
+		let bufferLeft = `FPS: ${framerate.toFixed(3)}<br><br>`;
+		let bufferRight = `Time: ${s.time.toFixed(3)}<br><br>`;
 
 		// print all of the positions and velocities
 		// Probe stuff
-		bufferLeft += `---Probe Position---<br>`;
+		bufferLeft += `───Probe Position───<br>`;
 		bufferLeft += `X: ${probeData[c.arrayProbeStart].toFixed(2)}<br>`;
 		bufferLeft += `Y: ${probeData[c.arrayProbeStart+1].toFixed(2)}<br>`;
 		bufferLeft += `Z: ${probeData[c.arrayProbeStart+2].toFixed(2)}<br>`;
-		bufferLeft += `Mass: ${probeData[c.arrayProbeStart+6].toFixed(2)}kg<br>`;
-		bufferLeft += `---Probe Velocity---<br>`;
+		bufferLeft += `───Probe Velocity───<br>`;
 		bufferLeft += `X: ${probeData[c.arrayProbeStart+3].toFixed(3)}<br>`;
 		bufferLeft += `Y: ${probeData[c.arrayProbeStart+4].toFixed(3)}<br>`;
 		bufferLeft += `Z: ${probeData[c.arrayProbeStart+5].toFixed(3)}<br>`;
 		bufferLeft += `Total: ${probeV.toFixed(3)}<br><br>`;
 
 		// Moon stuff
-		bufferLeft += `---Moon Position---<br>`;
+		bufferLeft += `───Moon Position───<br>`;
 		bufferLeft += `X: ${bonusData[c.arrayMoonStart].toFixed(2)}<br>`;
 		bufferLeft += `Y: ${bonusData[c.arrayMoonStart+1].toFixed(2)}<br>`;
 		bufferLeft += `Z: ${bonusData[c.arrayMoonStart+2].toFixed(2)}<br>`;
-		bufferLeft += `---Moon Velocity---<br>`;
+		bufferLeft += `───Moon Velocity───<br>`;
 		bufferLeft += `X: ${bonusData[c.arrayMoonStart+3].toFixed(3)}<br>`;
 		bufferLeft += `Y: ${bonusData[c.arrayMoonStart+4].toFixed(3)}<br>`;
 		bufferLeft += `Z: ${bonusData[c.arrayMoonStart+5].toFixed(3)}<br>`;
 		bufferLeft += `Total: ${moonV.toFixed(3)}<br>`;
 
-		// Prints everything for the right side (antenna stuff)
-		if (!s.trackBonus) {
-			// Link Budgets
-			bufferRight += `---Antennas---<br>`;
-			bufferRight += `WPSA: ${antennaText(probeData[c.arrayRangeWPSA], 12)}kbps<br>`;
-			bufferRight += `DSS24: ${antennaText(probeData[c.arrayRangeDSS24], 34)}kbps<br>`;
-			bufferRight += `DSS34: ${antennaText(probeData[c.arrayRangeDSS34], 34)}kbps<br>`;
-			bufferRight += `DSS54: ${antennaText(probeData[c.arrayRangeDSS54], 34)}kbps<br><br>`;
+		// DONE WITH LEFT SIDE ON TO THE RIGHT
+		let dss24Link, dss34Link, dss54Link, wpsaLink;
 
-			// just stuff for the priotorized List
-			let wpsaLink = dataObject.linkBudget(probeData[c.arrayRangeWPSA], 12);
-			let dss24Link = dataObject.linkBudget(probeData[c.arrayRangeDSS24], 34);
-			let dss34Link = dataObject.linkBudget(probeData[c.arrayRangeDSS34], 34);
-			let dss54Link = dataObject.linkBudget(probeData[c.arrayRangeDSS54], 34);
+		if (s.trackBonus) {
+			let probeCoords = [probeData[c.arrayProbeStart], probeData[c.arrayProbeStart+1], probeData[c.arrayProbeStart+2]];
+			let moonCoords = [bonusData[c.arrayMoonStart], bonusData[c.arrayMoonStart+1], bonusData[c.arrayMoonStart+2]];
 
-			if (useAntennaList) {
-				// More stuff for the priorotized list
-				let list = antennaList(wpsaLink, dss24Link, dss34Link, dss54Link);
-				let antennaKeys = Object.keys(list);
-				let antennaValues = Object.values(list);
-
-				// Adds the priorotized list stuff
-				bufferRight += `---Priorotized List---<br>`;
-
-				// Total number of avaliable antennas (Because of strattons weird data roudning thing, Math.floor is necessary)
-				bufferRight += `Total Avaliable: ${Math.floor(probeData[c.arrayRangeWPSA-1]+probeData[c.arrayRangeDSS24-1]+probeData[c.arrayRangeDSS34-1]+probeData[c.arrayRangeDSS54-1])}<br>`
-				bufferRight += `1. ${antennaKeys[3]} - ${antennaValues[3]}<br>`;
-				bufferRight += `2. ${antennaKeys[2]} - ${antennaValues[2]}<br>`;
-				bufferRight += `3. ${antennaKeys[1]} - ${antennaValues[1]}<br>`;
-				bufferRight += `4. ${antennaKeys[0]} - ${antennaValues[0]}<br>`;
-			}
+			dss24Link = dataObject.linkBudget(b.bonusRange(0, probeCoords, moonCoords, s.time), 34);
+			dss34Link = dataObject.linkBudget(b.bonusRange(1, probeCoords, moonCoords, s.time), 34);
+			dss54Link = dataObject.linkBudget(b.bonusRange(2, probeCoords, moonCoords, s.time), 34);
+			wpsaLink = dataObject.linkBudget(b.bonusRange(3, probeCoords, moonCoords, s.time), 12);
+		} else {
+			dss24Link = dataObject.linkBudget(probeData[c.arrayRangeDSS24], 34);
+			dss34Link = dataObject.linkBudget(probeData[c.arrayRangeDSS34], 34);
+			dss54Link = dataObject.linkBudget(probeData[c.arrayRangeDSS54], 34);
+			wpsaLink = dataObject.linkBudget(probeData[c.arrayRangeWPSA], 34);
 		}
+
+		bufferRight += `─────${s.trackBonus ? "BONUS" : "BASE"} DATA─────<br>`;
+		bufferRight += `Mass: ${probeData[c.arrayProbeStart+6].toFixed(2)}kg<br>`;
+		bufferRight += `Dist: ${probeData[probeData.length-1].toFixed(2)}km<br><br>`;
+		bufferRight += `───Antennas───<br>`;
+		bufferRight += `DSS24: ${antennaText(dss24Link, 34)}<br>`;
+		bufferRight += `DSS34: ${antennaText(dss34Link, 34)}<br>`;
+		bufferRight += `DSS54: ${antennaText(dss54Link, 34)}<br>`;
+		bufferRight += `WPSA: ${antennaText(wpsaLink, 12)}<br><br>`;
+
+		// More stuff for the priorotized list
+		let list = antennaList(wpsaLink, dss24Link, dss34Link, dss54Link);
+		let antennaKeys = Object.keys(list);
+		let antennaValues = Object.values(list);
+		antennaValues = antennaValues.map(value => isNaN(value) ?  "Disc." : value);
+
+		// Adds the priorotized list stuff
+		bufferRight += `───Priority List───<br>`;
+
+		// Total number of avaliable antennas (Because of strattons weird data roudning thing, Math.floor is necessary)
+		bufferRight += `Avaliable: ${(isNaN(dss24Link) ? 0 : 1) + (isNaN(dss34Link) ? 0 : 1) + (isNaN(dss54Link) ? 0 : 1) + (isNaN(wpsaLink) ? 0 : 1)}<br>`
+		bufferRight += `1: ${antennaKeys[3]} → ${listText(antennaValues[3])}<br>`;
+		bufferRight += `2: ${antennaKeys[2]} → ${listText(antennaValues[2])}<br>`;
+		bufferRight += `3: ${antennaKeys[1]} → ${listText(antennaValues[1])}<br>`;
+		bufferRight += `4: ${antennaKeys[0]} → ${listText(antennaValues[0])}<br>`;
 
 		overlayRightDOM.innerHTML = bufferRight;			// set the innerhtml to the newly generated buffer (this proved to be faster than writing to the DOM every time)
 		overlayLeftDOM.innerHTML = bufferLeft;
@@ -396,11 +431,7 @@ export const scene = ( dataObject, s ) => ( p ) => {
 	p.preload = () => {
 		//window.MSStream was removed because IE probably cant handle 8k textures lol (if you use IE, please get some help 🙏) both android and ios cant handle it in different ways
 		let res = /CrOS|iPad|iPhone|iPod|Android/.test(navigator.userAgent) ? "4k" : "8k";
-		
-		//debug statement, but will be pushed to prod because it's useful to end users too
-		if (res == "4k") {
-			console.log("Underpowered Device, loading 4K instead of 8K");
-		}
+		help.classList.toggle("hidden", /iPad|iPhone|iPod|Android/.test(navigator.userAgent));
 
 		// load the textures based on what resolution was chosen
 		earthDayTex = p.loadImage('assets/' + res + '/earthDay.jpg');
@@ -411,6 +442,8 @@ export const scene = ( dataObject, s ) => ( p ) => {
 		// load the shaders
 		earthShader = p.loadShader('src/glsl/earth.vert', 'src/glsl/earth.frag');
 		moonShader = p.loadShader('src/glsl/moon.vert', 'src/glsl/moon.frag');
+
+		rocketModel = p.loadModel('assets/orion.obj', true);
 	}
 
 	p.setup = () => {
@@ -458,6 +491,7 @@ export const scene = ( dataObject, s ) => ( p ) => {
 		if (p.keyCode == 27) {				// on esc key press show/hide menu
 			menu.classList.toggle("hidden");
 			canvasdiv.classList.toggle("small");
+			help.classList.add("hidehelp");
 		}
 	}
 
@@ -522,9 +556,6 @@ export const scene = ( dataObject, s ) => ( p ) => {
 	const axesCheckboxDOM = document.getElementById("axescheckbox");
 	axesCheckboxDOM.oninput = () => { showAxes = axesCheckboxDOM.checked; };
 
-	const listCheckboxDOM = document.getElementById("listcheckbox");
-	listCheckboxDOM.oninput = () => { useAntennaList = listCheckboxDOM.checked; }
-
 	const realCheckboxDOM = document.getElementById("realcheckbox");
 	realCheckboxDOM.oninput = () => { realTime = realCheckboxDOM.checked; }
 
@@ -536,4 +567,7 @@ export const scene = ( dataObject, s ) => ( p ) => {
 
 	const antennaCheckboxDOM = document.getElementById("antennacheckbox");
 	antennaCheckboxDOM.oninput = () => { showAntennaColor = antennaCheckboxDOM.checked; };
+
+	const rocketModelCheckboxDOM = document.getElementById("rocketmodelcheckbox");
+	rocketModelCheckboxDOM.oninput = () => { useRocketModel = rocketModelCheckboxDOM.checked };
 }

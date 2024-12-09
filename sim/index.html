@@ -8,7 +8,8 @@
 	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@100..900&family=Roboto&display=swap" rel="stylesheet">
 
 	<!-- p5 import -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.1/p5.min.js"></script>
+	<script src="src/js/p5.min.js"></script>
+	<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.1/p5.min.js"></script>-->
 	<!-- main script and style imports -->
 	<script type="module" src="src/js/main.js"></script>
 
@@ -16,6 +17,7 @@
 	<link rel="stylesheet" type="text/css" href="src/css/minimap.css">
 	<link rel="stylesheet" type="text/css" href="src/css/loading.css">
 	<link rel="stylesheet" type="text/css" href="src/css/menu.css">
+	<link rel="stylesheet" type="text/css" href="src/css/overlay.css">
 
 	<!-- basic website declarations -->
 	<title>Venatio</title>
@@ -27,8 +29,9 @@
 		<canvas id="canvas"></canvas>
 		<dd id="overlaytextleft" class="overlay hidden"></dd>
 		<dd id="overlaytextright" class="overlay hidden"></dd>
+		<dd id="help" class="overlay">ESC</dd>
 	</div>
-	<div id="minimap" aria-label="Minimap">
+	<div id="minimap" class="hidden" aria-label="Minimap">
 		<div id="minimaptab"></div>
 		<canvas id="minimapcanvas"></canvas>
 	</div>
@@ -146,19 +149,20 @@
 				<label>Show Text</label><br>
 				<input type="checkbox" id="textcheckbox" aria-label="Show Text"><br>
 				<label>Use Textures</label><br>
-				<input type="checkbox" id="texturescheckbox" aria-label="Use Textures" checked>
+				<input type="checkbox" id="texturescheckbox" aria-label="Use Textures" checked><br>
 			</div>
 			<hr>
 			<div class="menusection">
-				<label>Antenna Priority</label><br>
-				<input type="checkbox" id="listcheckbox" aria-label="Show Antenna Priority" checked><br>
 				<label>Real Time</label><br>
 				<input type="checkbox" id="realcheckbox" aria-label="Use Real Time"><br>
 				<label>Minimap</label><br>
-				<input type="checkbox" id="minimapcheckbox" aria-label="Show Minimap" checked><br>
+				<input type="checkbox" id="minimapcheckbox" aria-label="Show Minimap"><br>
+				<label>Use Rocket Model</label><br>
+				<input type="checkbox" id="rocketmodelcheckbox" aria-label="Use Rocket Model" checked><br>
 			</div>
 			<hr>
 		</div>
+		<hr>
 	</div>
 	<p style="display:none;" id="p5_loading"></p>
 </body>

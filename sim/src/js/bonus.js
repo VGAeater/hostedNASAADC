@@ -24,6 +24,7 @@ export function distance(antennaCords, probeCords) {
 	let first = (probeCords[0] - antennaCords[0])**2;
 	let second = (probeCords[1] - antennaCords[1])**2;
 	let third = (probeCords[2] - antennaCords[2])**2;
+
 	return Math.sqrt(first + second + third);
 }
 
@@ -34,7 +35,7 @@ export function rotationMatrix(timeElapsed) {
 	// Earth's tilt
 	let thetaX = earthTilt; 
 	// Earth's Rotation
-	let thetaY = earthRotation * timeElapsed;
+	let thetaZ = earthRotation * (timeElapsed + 521);
 
 	// Rotation matrices (got these on wikipedia cuz i am NOT doing ts myself)
 	let rX = [
@@ -42,18 +43,18 @@ export function rotationMatrix(timeElapsed) {
 		[0, Math.cos(thetaX), -Math.sin(thetaX)],
 		[0, Math.sin(thetaX), Math.cos(thetaX)]
 	]; 
-	let rY = [
-		[Math.cos(thetaY), 0, Math.sin(thetaY)],
-		[0,              1, 0],
-		[-Math.sin(thetaY), 0, Math.cos(thetaY)]
+	let rZ = [
+		[Math.cos(thetaZ), -Math.sin(thetaZ), 0],
+		[Math.sin(thetaZ), Math.cos(thetaZ), 0],
+		[0, 0, 1]
 	];
 
 	// Multiplies and returns the 2 matricies
-	return multMatrices(rX, rY);
+	return multMatrices(rX, rZ);
 }
 
 export function antennaLoc(antenna, timeElapsed) {
-	let radLat = c.antennaPositions[antenna][0];
+	let radLat = c.antennaPositions[antenna][0];			// Gets the location of the antennas
 	let radLong = c.antennaPositions[antenna][1];
 
 	let totalRadius = c.earthRadius + c.antennaPositions[antenna][2];
@@ -63,16 +64,42 @@ export function antennaLoc(antenna, timeElapsed) {
 	let y = totalRadius * Math.cos(radLat) * Math.sin(radLong);
 	let z = totalRadius * Math.sin(radLat);
 
-	let initialPos = [[x], [y], [z]];
+	let initialPos = [[x], [y], [z]];				// Has to be a 2d array or else matrixmultiplications doesnt work
 
-	let rotation = rotationMatrix(timeElapsed);
+	let rotation = rotationMatrix(timeElapsed);			// Finds the rotation matrix
 
-	return multMatrices(rotation, initialPos);
+	return multMatrices(rotation, initialPos);			// Multiplies the position by its rotation
 }
 
-export function bonusBudget(antenna, probeX, probeY, probeZ, time) {
-	let antennaPos = antennaLoc(antenna, time);
-	let probe = [probeX, probeY, probeZ];
+export function interceptSphere(pointA, pointB, sphere, radius) {
+	// the following variavles are relative to point a
+	let sphereDist = Math.hypot(pointA[0] - sphere[0], pointA[1] - sphere[1], pointA[2] - sphere[2]);
+	let tangentDist = Math.sqrt(sphereDist**2 - radius**2);
 
-	return distance(antennaPos, probe);
+	let pointDist = Math.hypot(pointA[0] - pointB[0], pointA[1] - pointB[1], pointA[2] - pointB[2]);
+
+	if (sphereDist < radius)
+		return true;
+
+	let multDist = Math.min(tangentDist, pointDist);
+
+	let incX = pointA[0] + ((pointB[0] - pointA[0]) / pointDist * multDist);
+	let incY = pointA[1] + ((pointB[1] - pointA[1]) / pointDist * multDist);
+	let incZ = pointA[2] + ((pointB[2] - pointA[2]) / pointDist * multDist);
+
+	let incDist = Math.hypot(incX - sphere[0], incY - sphere[1], incZ - sphere[2]);
+
+	return incDist < radius;
+}
+
+export function bonusRange(antenna, probe, moon, time) {
+	let antennaPos = antennaLoc(antenna, time).flat();		// Finds the location of the antenna
+
+	if (interceptSphere(probe, antennaPos, [0, 0, 0], c.earthRadius))
+		return NaN;
+
+	if (interceptSphere(probe, antennaPos, moon, c.moonRadius))
+		return NaN;
+
+	return distance(antennaPos, probe);				// Finds and returns the distance between them
 }
