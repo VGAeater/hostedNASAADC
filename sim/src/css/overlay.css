@@ -23,12 +23,13 @@
 #help {
 	left: 2vh;
 	transition-duration: 1s;
-	font-size: 3vh;
-	border-radius: 1.5vh;
-	padding: 1vh;
+	font-size: 2.5vh;
+	/*border-radius: 1.5vh;*/
+	padding: 1.5vh;
+	animation: pulsing ease-out 0.75s infinite alternate;
 }
 
 .hidehelp {
 	translate: 0px -24vh; 
-	opacity: 0;
 }
+
