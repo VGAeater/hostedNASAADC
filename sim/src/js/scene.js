@@ -246,53 +246,69 @@ export const scene = (dataObject, s) => (p) => {
 	}
 
 	function drawFaceBox(boxWidth, boxHeight, boxDepth, front, top, right, bottom, left, back) {
-		let w = boxWidth * SCALE_FACTOR;
-		let h = boxHeight * SCALE_FACTOR;
-		let d = boxDepth * SCALE_FACTOR;
-
-		// Center the box.
-		translate(-w / 2, -h / 2);
-
-		texture(front);
-		quad(0, 0, w, 0, w, h, 0, h);
-
-		push();
-		texture(left);
-		translate(0, 0, -d);
-		rotateY(-HALF_PI);
-		quad(0, 0, d, 0, d, h, 0, h);
-
-		pop();
-		push();
-		texture(top);
-		translate(0, 0, -d);
-		rotateX(HALF_PI);
-		quad(0, 0, w, 0, w, d, 0, d);
-
-		pop();
-		push();
-		texture(right);
-		translate(w, 0, 0);
-		rotateY(HALF_PI);
-		quad(0, 0, d, 0, d, h, 0, h);
-
-		pop();
-		push();
-		texture(bottom);
-		translate(0, h, 0);
-		rotateX(-HALF_PI);
-		quad(0, 0, w, 0, w, d, 0, d);
-
-		pop();
-		push();
-		texture(back);
-		rotateY(PI);
-		translate(-w, 0, d);
-		quad(0, 0, w, 0, w, h, 0, h);
+		p.push();
+		p.noStroke();
+		// Center the box by translating to the center of the box
+		p.translate(0, 0, 0);
+		
+		// Front face
+		p.push();
+		p.texture(front);
+		p.translate(0, 0, boxDepth / 2);
+		p.quad(-boxWidth/2, -boxHeight/2, boxWidth/2, -boxHeight/2, 
+			   boxWidth/2, boxHeight/2, -boxWidth/2, boxHeight/2);
+		p.pop();
+	
+		// Back face
+		p.push();
+		p.texture(back);
+		p.translate(0, 0, -boxDepth / 2);
+		p.rotateY(Math.PI);
+		p.quad(-boxWidth/2, -boxHeight/2, boxWidth/2, -boxHeight/2, 
+			   boxWidth/2, boxHeight/2, -boxWidth/2, boxHeight/2);
+		p.pop();
+	
+		// Left face
+		p.push();
+		p.texture(left);
+		p.translate(-boxWidth/2, 0, 0);
+		p.rotateY(-Math.PI/2);
+		p.quad(-boxDepth/2, -boxHeight/2, boxDepth/2, -boxHeight/2, 
+			   boxDepth/2, boxHeight/2, -boxDepth/2, boxHeight/2);
+		p.pop();
+	
+		// Right face
+		p.push();
+		p.texture(right);
+		p.translate(boxWidth/2, 0, 0);
+		p.rotateY(Math.PI/2);
+		p.quad(-boxDepth/2, -boxHeight/2, boxDepth/2, -boxHeight/2, 
+			   boxDepth/2, boxHeight/2, -boxDepth/2, boxHeight/2);
+		p.pop();
+	
+		// Top face
+		p.push();
+		p.texture(top);
+		p.translate(0, -boxHeight/2, 0);
+		p.rotateX(-Math.PI/2);
+		p.quad(-boxWidth/2, -boxDepth/2, boxWidth/2, -boxDepth/2, 
+			   boxWidth/2, boxDepth/2, -boxWidth/2, boxDepth/2);
+		p.pop();
+	
+		// Bottom face
+		p.push();
+		p.texture(bottom);
+		p.translate(0, boxHeight/2, 0);
+		p.rotateX(Math.PI/2);
+		p.quad(-boxWidth/2, -boxDepth/2, boxWidth/2, -boxDepth/2, 
+			   boxWidth/2, boxDepth/2, -boxWidth/2, boxDepth/2);
+		p.pop();
+	
+		p.pop();
 	}
 
 	function handleSky() {
-		drawFaceBox(100000, 100000, 100000, starsFront, starsTop, starsRight, starsBottom, starsLeft, starsBack);
+		drawFaceBox(10000000, 10000000, 10000000, starsFront, starsTop, starsRight, starsBottom, starsLeft, starsBack);
 	}
 
 	function handleEarth(baseData, bonusData, budgets) {
@@ -543,12 +559,12 @@ export const scene = (dataObject, s) => (p) => {
 		cloudsTex = p.loadImage('assets/' + res + '/clouds.jpg');
 		moonTex = p.loadImage('assets/' + res + '/moon.jpg');
 		// starsBG = p.loadImage('assets/starsBG.jpg');
-		starsTop = p.loadImage('assets/firstImage.png');
-		starsBottom = p.loadImage('assets/fifthImage.png');
-		starsFront = p.loadImage('assets/secondImage.png');
-		starsBack = p.loadImage('assets/sixthImage.png');
-		starsLeft = p.loadImage('assets/thirdImage.png');
-		starsRight = p.loadImage('assets/fourthImage.png');
+		starsTop = p.loadImage('assets/top.png');
+		starsBottom = p.loadImage('assets/bottom.png');
+		starsFront = p.loadImage('assets/front.png');
+		starsBack = p.loadImage('assets/back.png');
+		starsLeft = p.loadImage('assets/left.png');
+		starsRight = p.loadImage('assets/right.png');
 
 		// load the shaders
 		earthShader = p.loadShader('src/glsl/earth.vert', 'src/glsl/earth.frag');
