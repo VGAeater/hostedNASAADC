@@ -86,9 +86,10 @@ export const scene = (dataObject, s) => (p) => {
 	const priorityLabel4DOM = document.getElementById("priorityLabel4");
 
 	var showOtherPath = false;				// data selection trackers
-	var earthDayTex, earthNightTex, moonTex, cloudsTex, starsBG;	// the textures for the earth and moon
+	var earthDayTex, earthNightTex, moonTex, cloudsTex;	// the textures for the earth and moon
 	var earthShader, moonShader;		// the shaders for the eath, moon, and atmosphere
 	var rocketModel;
+	var starsTop, starsBottom, starsFront, starsBack, starsLeft, starsRight;
 
 	// main dom objects
 	const canvas = document.getElementById("canvas");
@@ -242,6 +243,56 @@ export const scene = (dataObject, s) => (p) => {
 			p.stroke(orbitData[i][0]);
 			p.model(orbitData[i][mainPath]);
 		}
+	}
+
+	function drawFaceBox(boxWidth, boxHeight, boxDepth, front, top, right, bottom, left, back) {
+		let w = boxWidth * SCALE_FACTOR;
+		let h = boxHeight * SCALE_FACTOR;
+		let d = boxDepth * SCALE_FACTOR;
+
+		// Center the box.
+		translate(-w / 2, -h / 2);
+
+		texture(front);
+		quad(0, 0, w, 0, w, h, 0, h);
+
+		push();
+		texture(left);
+		translate(0, 0, -d);
+		rotateY(-HALF_PI);
+		quad(0, 0, d, 0, d, h, 0, h);
+
+		pop();
+		push();
+		texture(top);
+		translate(0, 0, -d);
+		rotateX(HALF_PI);
+		quad(0, 0, w, 0, w, d, 0, d);
+
+		pop();
+		push();
+		texture(right);
+		translate(w, 0, 0);
+		rotateY(HALF_PI);
+		quad(0, 0, d, 0, d, h, 0, h);
+
+		pop();
+		push();
+		texture(bottom);
+		translate(0, h, 0);
+		rotateX(-HALF_PI);
+		quad(0, 0, w, 0, w, d, 0, d);
+
+		pop();
+		push();
+		texture(back);
+		rotateY(PI);
+		translate(-w, 0, d);
+		quad(0, 0, w, 0, w, h, 0, h);
+	}
+
+	function handleSky() {
+		drawFaceBox(100000, 100000, 100000, starsFront, starsTop, starsRight, starsBottom, starsLeft, starsBack);
 	}
 
 	function handleEarth(baseData, bonusData, budgets) {
@@ -491,6 +542,13 @@ export const scene = (dataObject, s) => (p) => {
 		earthNightTex = p.loadImage('assets/' + res + '/earthNight.jpg');
 		cloudsTex = p.loadImage('assets/' + res + '/clouds.jpg');
 		moonTex = p.loadImage('assets/' + res + '/moon.jpg');
+		// starsBG = p.loadImage('assets/starsBG.jpg');
+		starsTop = p.loadImage('assets/firstImage.png');
+		starsBottom = p.loadImage('assets/fifthImage.png');
+		starsFront = p.loadImage('assets/secondImage.png');
+		starsBack = p.loadImage('assets/sixthImage.png');
+		starsLeft = p.loadImage('assets/thirdImage.png');
+		starsRight = p.loadImage('assets/fourthImage.png');
 
 		// load the shaders
 		earthShader = p.loadShader('src/glsl/earth.vert', 'src/glsl/earth.frag');
@@ -545,6 +603,7 @@ export const scene = (dataObject, s) => (p) => {
 		}
 		
 		// run each handler
+		handleSky();
 		handleEarth(baseData, bonusData, budgets);
 		handleMoon(bonusData);
 		handleRocket(baseData, bonusData);
