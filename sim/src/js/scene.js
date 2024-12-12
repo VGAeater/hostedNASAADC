@@ -525,12 +525,12 @@ export const scene = (dataObject, s) => (p) => {
 		cloudsTex = p.loadImage('assets/' + res + '/clouds.jpg');
 		moonTex = p.loadImage('assets/' + res + '/moon.jpg');
 
-		starsTop = p.loadImage('assets/top.png');
-		starsBottom = p.loadImage('assets/bottom.png');
-		starsFront = p.loadImage('assets/front.png');
-		starsBack = p.loadImage('assets/back.png');
-		starsLeft = p.loadImage('assets/left.png');
-		starsRight = p.loadImage('assets/right.png');
+		starsTop = p.loadImage('assets/' + res + '/top.png');
+		starsBottom = p.loadImage('assets/' + res + '/bottom.png');
+		starsFront = p.loadImage('assets/' + res + '/front.png');
+		starsBack = p.loadImage('assets/' + res + '/back.png');
+		starsLeft = p.loadImage('assets/' + res + '/left.png');
+		starsRight = p.loadImage('assets/' + res + '/right.png');
 
 		// load the shaders
 		earthShader = p.loadShader('src/glsl/earth.vert', 'src/glsl/earth.frag');
