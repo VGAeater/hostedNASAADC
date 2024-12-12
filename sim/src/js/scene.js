@@ -14,8 +14,6 @@ export const scene = (dataObject, s) => (p) => {
 
 	var moonPath;						// moon path model that will be built later
 
-	var stars = [];						// star background
-
 	var realTime = false;
 
 	var prevBest = "WPSA";		// Previous best for the priorotized list
@@ -131,38 +129,6 @@ export const scene = (dataObject, s) => (p) => {
 		if (budget > 1000)
 			return [255, 140, 0];
 		return [255, 0, 0];				// default to red for very weak connections
-	}
-
-	function createStarBackground(starNums = 1000) {
-		var stars = [];
-		var starColors = [[200, 200, 200], [175, 175, 175], [150, 150, 150], [100, 100, 100], [50, 50, 50]];
-
-		function makeRandomStarPoint() {
-			const r = Math.floor(Math.random() * 600000) + 400000;
-			const randAngle = Math.random();
-
-			const theta = 2 * Math.PI * randAngle;
-			const phi = Math.random() * Math.PI;
-
-			//gets cartesian coordinates
-			const x = r * Math.sin(phi) * Math.cos(theta);
-			const y = r * Math.sin(phi) * Math.sin(theta);
-			const z = r * Math.cos(phi);
-			
-			return {
-				x: x,
-				y: y,
-				z: z,
-				color: starColors[Math.floor(Math.random() * starColors.length)],
-				strokeWeight: Math.floor(Math.random() * 5) + 2
-			};
-		}
-
-		for (let i = 0; i < starNums; i++) {
-			stars.push(makeRandomStarPoint());
-		}
-		
-		return stars;
 	}
 
 	function handleRocket(baseData, bonusData) {
@@ -558,7 +524,7 @@ export const scene = (dataObject, s) => (p) => {
 		earthNightTex = p.loadImage('assets/' + res + '/earthNight.jpg');
 		cloudsTex = p.loadImage('assets/' + res + '/clouds.jpg');
 		moonTex = p.loadImage('assets/' + res + '/moon.jpg');
-		// starsBG = p.loadImage('assets/starsBG.jpg');
+
 		starsTop = p.loadImage('assets/top.png');
 		starsBottom = p.loadImage('assets/bottom.png');
 		starsFront = p.loadImage('assets/front.png');
